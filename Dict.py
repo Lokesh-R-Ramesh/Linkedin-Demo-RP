@@ -1,11 +1,13 @@
 import streamlit as st
-import pyautogui
 import time
 import easyocr
 import mss
 import cv2
 import numpy as np
 from PIL import Image
+import os
+if os.environ.get("DISPLAY"):
+    import pyautogui
 import torch
 from PyPDF2 import PdfReader
 from sklearn.cluster import KMeans
