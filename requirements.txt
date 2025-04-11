@@ -98,6 +98,7 @@ platformdirs
 prompt_toolkit
 propcache
 proto-plus
+opencv-python-headless
 protobuf
 psutil
 pure_eval
