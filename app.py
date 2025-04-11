@@ -2,7 +2,6 @@ import json
 import pandas as pd
 import streamlit as st
 import snowflake.connector
-#
 import os
 import boto3
 from transformers import pipeline
