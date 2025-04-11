@@ -1,28 +1,26 @@
-# --- Core ---
+# Streamlit core
 streamlit
 pandas
 numpy
 scikit-learn
-matplotlib-inline
 Pillow
 PyPDF2
 mss
 
-# --- OCR and CV ---
+# EasyOCR without OpenGL issues
 easyocr
-torch
+torch==2.0.1
+torchvision==0.15.2
 opencv-python-headless
-python-bidi
 
-# --- Hugging Face models ---
+# Transformers + Hugging Face
 transformers
 sentence-transformers
 huggingface-hub
 faiss-cpu
 
-# --- AWS Bedrock / LangChain ---
+# AWS / LangChain
 boto3
-botocore
 langchain
 langchain-community
 langchain-core
@@ -32,48 +30,19 @@ langchain-ollama
 langchain-text-splitters
 langsmith
 
-# --- Google GenAI support ---
-google-ai-generativelanguage
-google-api-core
-google-auth
-googleapis-common-protos
-
-# --- Snowflake connector ---
+# Snowflake
 snowflake-connector-python
 
-# --- Utilities ---
+# Utils
 regex
 pyyaml
-filetype
 tabulate
-tqdm
 requests
 protobuf
-urllib3
-charset-normalizer
-idna
+python-bidi
 typing-extensions
 typing-inspect
-typing-inspection
 jsonschema
-jsonschema-specifications
-dataclasses-json
 pydantic
 pydantic-core
 pydantic-settings
-python-dateutil
-six
-fsspec
-pyarrow
-decorator
-fuzzywuzzy
-
-# --- Visualization (optional, used by Streamlit) ---
-altair
-watchdog
-blinker
-jinja2
-click
-psutil
-pydeck
-tzdata
