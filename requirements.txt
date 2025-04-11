@@ -85,7 +85,6 @@ ninja
 numpy
 ollama
 openai
-opencv-python
 opencv-python-headless
 openpyxl
 orjson
@@ -98,7 +97,6 @@ platformdirs
 prompt_toolkit
 propcache
 proto-plus
-opencv-python-headless
 protobuf
 psutil
 pure_eval
