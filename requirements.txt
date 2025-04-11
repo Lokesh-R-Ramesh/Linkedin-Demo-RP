@@ -125,7 +125,6 @@ python-dateutil
 python-dotenv
 pytweening
 pytz
-pywin32
 PyYAML
 pyzmq
 referencing
