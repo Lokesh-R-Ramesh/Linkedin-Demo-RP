@@ -19,14 +19,14 @@ from langchain_ollama import ChatOllama
 from Dict import extract_text_from_pdf ,capture_active_screen, detect_active_filter, analyze_dashboard_image, get_active_screen, analyze_dashboard_image
 import os
 
-def extract_text_from_pdf(pdf_path):
-    """Extract text from a PDF file using PyPDF2."""
-    try:
-        reader = PdfReader(pdf_path)
-        text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
-        return text
-    except Exception as e:
-        return f"Error reading PDF: {str(e)}"
+#def extract_text_from_pdf(pdf_path):
+#    """Extract text from a PDF file using PyPDF2."""
+#    try:
+#        reader = PdfReader(pdf_path)
+#        text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+#        return text
+#    except Exception as e:
+#        return f"Error reading PDF: {str(e)}"
     
 st.set_page_config(layout="wide")
 if "messages" not in st.session_state:
@@ -127,19 +127,19 @@ with st.sidebar:
                 FROM DSX_DASHBOARDS_SANDBOX.HUBSPOT_REPORTING.VW_DEALS_LINE_ITEMS_DATA
             )
     """
-    pdf_path = r"C:\Users\LokeshRamesh\Documents\co_10 training\LLM\Linkedin Demo\Power_BI_User_Guide_1.pdf"
-    user_guide_text = extract_text_from_pdf(pdf_path)
+    #pdf_path = r"C:\Users\LokeshRamesh\Documents\co_10 training\LLM\Linkedin Demo\Power_BI_User_Guide_1.pdf"
+    #user_guide_text = extract_text_from_pdf(pdf_path)
 
     # Split text into chunks for better retrieval
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500, chunk_overlap=50, length_function=len
-    )
+    #text_splitter = RecursiveCharacterTextSplitter(
+    #    chunk_size=500, chunk_overlap=50, length_function=len
+    #)
     text_chunks = text_splitter.split_text(user_guide_text)
 
     # Create text embeddings
-    embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    vector_store = FAISS.from_texts(texts=text_chunks, embedding=embedding_model)
-    retriever = vector_store.as_retriever()
+    #embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    #vector_store = FAISS.from_texts(texts=text_chunks, embedding=embedding_model)
+    #retriever = vector_store.as_retriever()
 
 
     Snowflack_data = pd.read_sql(query, conn)
