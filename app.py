@@ -4,29 +4,37 @@ import streamlit as st
 import snowflake.connector
 import os
 import boto3
+import cv2
+import easyocr
+from langchain.chat_models import ChatOpenAI
+from langchain.embeddings import OpenAIEmbeddings
+from PIL import Image
 from transformers import pipeline
+from langchain.schema import HumanMessage, SystemMessage
 from PyPDF2 import PdfReader
 from langchain_experimental.agents import create_pandas_dataframe_agent
 from fuzzywuzzy import process
 from langchain.schema import AIMessage
+from langchain_community.chat_models import BedrockChat
 from langchain.chains import RetrievalQA
 from langchain.chains.question_answering import load_qa_chain
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_ollama import ChatOllama
-from Dict import extract_text_from_pdf ,capture_active_screen, detect_active_filter, analyze_dashboard_image, get_active_screen, analyze_dashboard_image
 import os
+import tempfile
+from dotenv import load_dotenv
 
-#def extract_text_from_pdf(pdf_path):
-#    """Extract text from a PDF file using PyPDF2."""
-#    try:
-#        reader = PdfReader(pdf_path)
-#        text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
-#        return text
-#    except Exception as e:
-#        return f"Error reading PDF: {str(e)}"
+load_dotenv()
+
+def extract_text_from_pdf(pdf_path):
+    """Extract text from a PDF file using PyPDF2."""
+    try:
+        reader = PdfReader(pdf_path)
+        text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+        return text
+    except Exception as e:
+        return f"Error reading PDF: {str(e)}"
     
 st.set_page_config(layout="wide")
 if "messages" not in st.session_state:
@@ -51,28 +59,33 @@ st.markdown(
     unsafe_allow_html=True
 )
 with st.sidebar:
-    #API = st.text_input("Upload the API Key")
-    #SNOWFLAKE_USER_input = st.text_input("Snowflake User")
-    #SNOWFLAKE_PASSWORD_input = st.text_input("Snowflake Password")
-    # Set your Gemini API Key
-    #selected_model ="deepseek-r1:1.5b"
+    API = os.getenv("ACCESS_KEY")
+    Secure_Key = os.getenv("SECRET_ACCESS_KEY")
+    SNOWFLAKE_USER_input = os.getenv("SNOWFLAKE_USER_input")
+    SNOWFLAKE_PASSWORD_input = os.getenv("SNOWFLAKE_PASSWORD_input")
 
-    #llm = ChatOllama(
-    #model = selected_model,
-    #base_url = "http://localhost:11434",
-    #temperature = 1.0
-    #)
-    API = st.text_input("Upload the API Key")
-    SNOWFLAKE_USER_input = st.text_input("Snowflake User")
-    SNOWFLAKE_PASSWORD_input = st.text_input("Snowflake Password")
-    # Set your Gemini API Key
-    os.environ["GOOGLE_API_KEY"] = API
+    
+    st.session_state.API = API
+    st.session_state.Secure_Key = Secure_Key
 
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-pro",  # or "gemini-1.5-pro" if available
-        temperature=0.1,
-        top_p=0.9
+    bedrock_runtime = boto3.client(
+        service_name="bedrock-runtime",
+        region_name="us-east-1",
+        aws_access_key_id=st.session_state.API,
+        aws_secret_access_key=st.session_state.Secure_Key,
     )
+
+    llm = BedrockChat(
+        model_id="anthropic.claude-3-sonnet-20240229-v1:0",
+        client=bedrock_runtime,
+        model_kwargs={
+            "max_tokens": 1000,
+            "temperature": 0.1,
+            "top_p": 0.9,
+            "top_k": 50
+        }
+    )
+
 
     # Snowflake connection details
     SNOWFLAKE_USER = SNOWFLAKE_USER_input
@@ -90,7 +103,7 @@ with st.sidebar:
         warehouse=SNOWFLAKE_WAREHOUSE,
     )
 
-    # SQL query to execute
+        # SQL query to execute
     query = """
     SELECT DISTINCT_CAPABILITY AS "Number of capability",
         SNAPSHOT_DATE AS "Date of data pulled",
@@ -127,25 +140,25 @@ with st.sidebar:
                 FROM DSX_DASHBOARDS_SANDBOX.HUBSPOT_REPORTING.VW_DEALS_LINE_ITEMS_DATA
             )
     """
-    #pdf_path = r"C:\Users\LokeshRamesh\Documents\co_10 training\LLM\Linkedin Demo\Power_BI_User_Guide_1.pdf"
+    #pdf_path = r"C:\Users\LokeshRamesh\Documents\co_10 training\AI\Linkedin Chatbot\Power_BI_User_Guide_1.pdf"
     #user_guide_text = extract_text_from_pdf(pdf_path)
 
     # Split text into chunks for better retrieval
     #text_splitter = RecursiveCharacterTextSplitter(
     #    chunk_size=500, chunk_overlap=50, length_function=len
     #)
-    text_chunks = text_splitter.split_text(user_guide_text)
+    #text_chunks = text_splitter.split_text(user_guide_text)
 
     # Create text embeddings
-    #embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    #embedding_model = OpenAIEmbeddings(model="text-embedding-ada-002")
     #vector_store = FAISS.from_texts(texts=text_chunks, embedding=embedding_model)
     #retriever = vector_store.as_retriever()
 
 
     Snowflack_data = pd.read_sql(query, conn)
 
-    json_path = r"C:\Users\LokeshRamesh\Documents\co_10 training\LLM\Linkedin Demo\DataModelSchema.json"
-    excel_path = r"C:\Users\LokeshRamesh\Documents\co_10 training\LLM\Linkedin Demo\Data DictionaryChat bot.xlsx"
+    json_path = r"C:\Users\LokeshRamesh\Documents\co_10 training\AI\Linkedin Chatbot\DataModelSchema.json"
+    excel_path = r"C:\Users\LokeshRamesh\Documents\co_10 training\AI\Linkedin Chatbot\Data DictionaryChat bot.xlsx"
 
     json_data = pd.read_json(json_path, encoding='utf-16')
     df = pd.DataFrame()
@@ -171,7 +184,7 @@ with st.sidebar:
 
 
 
-    PDF = RetrievalQA.from_chain_type(llm=llm,chain_type="stuff",retriever=retriever)
+    #PDF = RetrievalQA.from_chain_type(llm=llm,chain_type="stuff",retriever=retriever)
     DAX = create_pandas_dataframe_agent(llm=llm,df = Measure_Table,allow_dangerous_code=True, handle_parsing_errors=True,verbose=True,number_of_head_rows= Measure_Table.shape[0])
     Table = create_pandas_dataframe_agent(llm=llm,df = df_1,allow_dangerous_code=True, handle_parsing_errors=True,verbose=True,number_of_head_rows= df_1.shape[0])
     Excel = create_pandas_dataframe_agent(llm=llm,df = xls_data,allow_dangerous_code=True, handle_parsing_errors=True,verbose=True,number_of_head_rows= xls_data.shape[0])
@@ -193,7 +206,7 @@ with st.sidebar:
     - `"Give me the calculation for TCV"` → Uses **Dax**
     - `"What does TCV means ?"` → Uses **Dictionary**
     - `"Give the table names present"` → Uses **Table**
-    - `"Can you guide me in how to use the sliced?"` → Uses **Guide**
+    - `"Analyze the data and identify all possible reasons why the TCV in February 2024 is higher compared to other months. Consider factors such as team performance, deal size, client activity, or any noticeable trends or anomalies."` → Uses **Data**
     """)
 
 
@@ -273,8 +286,8 @@ with st.sidebar:
 
                 if selected_agent:
                     response_content = selected_agent.invoke(conversation_history)
-                elif "GUIDE" in prompt.upper() or "PDF" in prompt.upper():
-                    response_content = PDF.invoke(conversation_history).get("result"," ")
+                #elif "GUIDE" in prompt.upper() or "PDF" in prompt.upper():
+                #   response_content = PDF.invoke(conversation_history).get("result"," ")
                 else:
                     response_content = llm.invoke(conversation_history)
                     if isinstance(response_content, AIMessage):
@@ -305,7 +318,7 @@ with st.sidebar:
                     st.markdown(f'<div style="font-size: small;">{message["content"]}</div>', unsafe_allow_html=True)
 
 with st.container(border=True):
-    power_bi_url = "https://app.powerbi.com/reportEmbed?reportId=2e6587b4-0312-4716-b90f-9e6e09928448&autoAuth=true&ctid=b1aae949-a5ef-4815-b7af-f7c4aa546b28"    # Custom CSS for Full-Screen Power BI Embed
+    power_bi_url = "https://app.powerbi.com/reportEmbed?reportId=b6437c22-5b36-4b31-8a98-7b892c5a6511&autoAuth=true&ctid=b1aae949-a5ef-4815-b7af-f7c4aa546b28"
     st.markdown(
         """
         <style>
@@ -332,23 +345,42 @@ with st.container(border=True):
         """,
         unsafe_allow_html=True,
     )
-if "summary" not in st.session_state:
-    st.session_state.summary = None
-if "dashboard_analysis" not in st.session_state:
-    st.session_state.dashboard_analysis = None
 
-if st.button("Capture & Analyze Dashboard"):
-    if st.session_state.dashboard_analysis is None:
-        screenshot = capture_active_screen()
-        screenshot_path = "dashboard.png"
-        extracted_text = analyze_dashboard_image(screenshot_path)
+st.title("Image analyzer")
+st.write("Upload an image of a dashboard to analyze its contents.")
+image_path = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"], key="image_uploader")
 
-        # Pass data to Bedrock LLM
-        query_text = f"Summarize the following dashboard information  make it as a less line more info formate: {extracted_text}"
-        response = llm.invoke(query_text)
-        st.session_state.dashboard_analysis = response
-if st.session_state.dashboard_analysis:
-    st.subheader("Dashboard Summary:")
-    st.write(st.session_state.dashboard_analysis.content)
-    if st.button('Clear Summary'):
-        st.session_state.dashboard_analysis = None
+if image_path:
+    image = Image.open(image_path)
+    st.image(image, caption="📸 Uploaded Dashboard Image", use_column_width=True)
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_file:
+        image.save(tmp_file.name)
+        image_path = tmp_file.name
+        reader = easyocr.Reader(['en'])
+        img = cv2.imread(image_path)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+
+        ocr_results = reader.readtext(gray)
+        extracted_text = [text[1] for text in ocr_results]
+        extracted_numbers = [word for text in extracted_text for word in text.split() if word.replace(",", "").replace(".", "").isdigit()]
+
+        # Detect active filter (Assuming a placeholder function detect_active_filter)
+        #active_filter = detect_active_filter(image_path)
+
+        description = (f"Dashboard contains charts/tables. "
+                        f"Detected text: {'; '.join(extracted_text)}. "
+                        f"Numbers: {', '.join(extracted_numbers)}. ")
+                        #f"Active filter: {active_filter}.")
+        
+        system_message = SystemMessage(content="You are a skilled Image analyst.")
+
+# Define the user's prompt
+        user_message = HumanMessage(content=
+        f"""You're analyzing a dashboard based on the visual input. Summarize the dashboard content in a detailed yet user-friendly way, using only the information visible in the dashboard. Avoid technical or backend details—assume the user can only see what's presented on the screen.
+Here         is the extracted text from the dashboard: {description}""")
+
+        st.write("Analyzing the image...")
+        response = llm.invoke([system_message, user_message])
+        st.write(response.content)
