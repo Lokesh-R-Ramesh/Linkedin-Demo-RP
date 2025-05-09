@@ -157,8 +157,8 @@ with st.sidebar:
 
     Snowflack_data = pd.read_sql(query, conn)
 
-    json_path = r"C:\Users\LokeshRamesh\Documents\co_10 training\AI\Linkedin Chatbot\DataModelSchema.json"
-    excel_path = r"C:\Users\LokeshRamesh\Documents\co_10 training\AI\Linkedin Chatbot\Data DictionaryChat bot.xlsx"
+    json_path = r"DataModelSchema.json"
+    excel_path = r"Data DictionaryChat bot.xlsx"
 
     json_data = pd.read_json(json_path, encoding='utf-16')
     df = pd.DataFrame()
